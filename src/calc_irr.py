@@ -60,16 +60,16 @@ if __name__ == '__main__':
     )
  
 
-    # # --- Execute procedure and fetch result ---
-    # with pyodbc.connect(conn_str) as conn:
-    #     query = f"exec am.fetch_irr_data '{y6y_ago}', '{end_date}', '{end_date}'"
-    #     df = pd.read_sql(query, conn)
+    # --- Execute procedure and fetch result ---
+    with pyodbc.connect(conn_str) as conn:
+        query = f"exec am.fetch_irr_data '{y6y_ago}', '{end_date}', '{end_date}'"
+        df = pd.read_sql(query, conn)
 
     # df.to_pickle("irr_data.pkl")
     # print(f"{len(df):,} nr. of rows to")
 
 
-    df = pd.read_pickle("irr_data.pkl")
+
 
     current_max_date = df["vidmdags"].max().date()
     if end_date > current_max_date:
@@ -99,18 +99,18 @@ if __name__ == '__main__':
 
 
     group_by_list  = [("sjodnr","gerd"), 
-                    #("sjodnr","eink"), 
-                    #("sjodnr","gerdeink"), 
-                    ("sjodnr", "slflokkun")#,
-                    #("sjodnr",),
-                    #("sjodnr", "innl_erl", "mynt"),
-                    #("sjodnr", "innl_erl"),
-                    #("sjodnr", "slflokkun", "mynt"),
-                    #("verdtryggt",)
+                    ("sjodnr","eink"), 
+                    ("sjodnr","gerdeink"), 
+                    ("sjodnr", "slflokkun"),
+                    ("sjodnr",),
+                    ("sjodnr", "innl_erl", "mynt"),
+                    ("sjodnr", "innl_erl"),
+                    ("sjodnr", "slflokkun", "mynt"),
+                    ("verdtryggt",)
                     ]
     measure_list   = [("verdkr", "verd"),   
-                    #("verdkr", "verd"),
-                    #("verdkr", "verd"),    
+                    ("verdkr", "verd"),
+                    ("verdkr", "verd"),    
                     ("verdkr",),
                     ("verdkr",),
                     ("verdkr", "verd"),
@@ -118,14 +118,19 @@ if __name__ == '__main__':
                     ("verdkr", "verd"),
                     ("verdkr", )]
     keep_cols_list = [("slflokkun","mynt","gerdeink", 'eink', "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"),
-                    #("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"),
-                    #("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"), 
+                    ("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"),
+                    ("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"), 
                     (),
                     (),
                     (),
                     (),
                     (),
                     ()]   
+    
+
+    assert len(group_by_list) == len(measure_list), "config lists mismatch in length"
+    assert len(group_by_list) == len(keep_cols_list), "config lists mismatch in length"
+    
     windows = [
         ("YTD", start_of_year(end_date), end_date),
         ("1M",  months_ago(end_date, 1), end_date),
@@ -294,24 +299,10 @@ if __name__ == '__main__':
     dw.insert(final_df, "am.irr")
 
 
-    # import pandas as pd
-    # import urllib
-    # from sqlalchemy import create_engine
-    # quoted = urllib.parse.quote_plus(conn_str)
-    # engine = create_engine(f"mssql+pyodbc:///?odbc_connect={quoted}", fast_executemany=True)
 
 
     print(final_df.head())
-    # Perform insert
-    # with engine.begin() as conn:
-    #     final_df.to_sql(
-    #         name='irr',
-    #         schema='am',
-    #         con=conn,
-    #         if_exists="append",  # "append" or "replace"
-    #         index=False,
-    #         method="multi"
-    #     )
+
 
 
 
