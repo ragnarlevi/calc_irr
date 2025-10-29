@@ -122,9 +122,14 @@ def irr_by_groups(
         for m in measures:
             val_col, mov_col = m + value_suffix, m + move_suffix
 
-            start_v = float(g.loc[g[date_col] == start_date, val_col].sum())
+            start_v = float(g.loc[g[date_col] == start_date, val_col].sum()) + float(g.loc[g[date_col] == start_date, mov_col].sum())
             end_v   = float(g.loc[g[date_col] == end_date,   val_col].sum())
             mids    = g.loc[mid_mask, [date_col, mov_col]]
+
+            if np.abs(end_v) < 1e-3:
+                active = 0
+            else:
+                active = 1
 
             # Sign convention (your corrected version):
             #   start value = +start_v
@@ -164,10 +169,11 @@ def irr_by_groups(
             for c in keep_cols:
                 res[c] = kept.loc[row_match, c].iloc[0] if row_match.any() else np.nan
 
+        res["active"] = active
         rows.append(res)
 
     # Column order
-    base_cols = [*group_by, "start_date", "end_date"]
+    base_cols = [*group_by, "start_date", "end_date", "active"]
     meas_cols = []
     for m in measures:
         meas_cols += [f"{irr_id}_{m}", f"{irr_id}_{m}_real"]
