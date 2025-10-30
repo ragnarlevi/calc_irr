@@ -122,7 +122,7 @@ def irr_by_groups(
         for m in measures:
             val_col, mov_col = m + value_suffix, m + move_suffix
 
-            start_v = float(g.loc[g[date_col] == start_date, val_col].sum())
+            start_v = float(g.loc[g[date_col] == start_date, val_col].sum()) + float(g.loc[g[date_col] == start_date, mov_col].sum())
             end_v   = float(g.loc[g[date_col] == end_date,   val_col].sum())
             mids    = g.loc[mid_mask, [date_col, mov_col]]
 

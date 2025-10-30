@@ -37,7 +37,7 @@ if __name__ == '__main__':
     add_if_exists = args.add_if_exists
     print(add_if_exists)
     print(end_date)
-    y6y_ago  = end_date - relativedelta(years=6)  # 6 years ago from end_date
+    y6y_ago  = end_date - relativedelta(years=1)  # 6 years ago from end_date
 
 
     # --- DB setup ---
@@ -63,6 +63,7 @@ if __name__ == '__main__':
     # --- Execute procedure and fetch result ---
     with pyodbc.connect(conn_str) as conn:
         query = f"exec am.fetch_irr_data '{y6y_ago}', '{end_date}', '{end_date}'"
+        print(query)
         df = pd.read_sql(query, conn)
 
     # df.to_pickle("irr_data.pkl")
@@ -106,7 +107,8 @@ if __name__ == '__main__':
                     ("sjodnr", "innl_erl", "mynt"),
                     ("sjodnr", "innl_erl"),
                     ("sjodnr", "slflokkun", "mynt"),
-                    ("verdtryggt",)
+                    ("sjodnr", "verdtryggt",),
+                    ("sjodnr", "yflokkheiti",)
                     ]
     measure_list   = [("verdkr", "verd"),   
                     ("verdkr", "verd"),
@@ -116,10 +118,12 @@ if __name__ == '__main__':
                     ("verdkr", "verd"),
                     ("verdkr",),
                     ("verdkr", "verd"),
+                    ("verdkr", ),
                     ("verdkr", )]
     keep_cols_list = [("slflokkun","mynt","gerdeink", 'eink', "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"),
                     ("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"),
                     ("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"), 
+                    (),
                     (),
                     (),
                     (),
@@ -136,10 +140,10 @@ if __name__ == '__main__':
         ("1M",  months_ago(end_date, 1), end_date),
         ("3M",  months_ago(end_date, 3), end_date),
         ("6M",  months_ago(end_date, 6), end_date),
-        ("9M",  months_ago(end_date, 9), end_date),
-        ("1Y",  years_ago(end_date, 1),  end_date),
-        ("3Y",  years_ago(end_date, 3),  end_date),
-        ("5Y",  years_ago(end_date, 5),  end_date),
+       # ("9M",  months_ago(end_date, 9), end_date),
+       # ("1Y",  years_ago(end_date, 1),  end_date),
+       # ("3Y",  years_ago(end_date, 3),  end_date),
+       # ("5Y",  years_ago(end_date, 5),  end_date),
     ]
 
     all_blocks = []
@@ -294,6 +298,9 @@ if __name__ == '__main__':
 
     final_df = prepare_for_upload(final_df, end_date)
     final_df = align_to_schema(final_df)
+
+    final_df = final_df.loc[final_df["end_date"] == end_date]
+
     # upload data
     dw = DataUploader(conn_str)
     dw.insert(final_df, "am.irr")
