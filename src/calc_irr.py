@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 import argparse
 
 
+print(os.getcwd())
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../db_python')))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../calc_irr')))
 
@@ -30,10 +31,12 @@ if __name__ == '__main__':
     # --- CLI: take input end_date ---
     ap = argparse.ArgumentParser()
     ap.add_argument("--end-date", required=False, help="End date (YYYY-MM-DD); defaults to today.")
+    ap.add_argument("--ref-date", required=False, help="The date between validFrom and validTo (YYYY-MM-DD); defaults to today.")
     ap.add_argument("--add_if_exists", required=False, help="The code checks if the end_date is already in the irr data table. If 0 then the code does not add to the table if end_date already exists ")
     args = ap.parse_args()
 
     end_date = parse_date(args.end_date)
+    ref_date = parse_date(args.ref_date)
     add_if_exists = args.add_if_exists
     print(add_if_exists)
     print(end_date)
@@ -107,8 +110,9 @@ if __name__ == '__main__':
                     ("sjodnr", "innl_erl", "mynt"),
                     ("sjodnr", "innl_erl"),
                     ("sjodnr", "slflokkun", "mynt"),
-                    ("sjodnr", "verdtryggt",),
-                    ("sjodnr", "yflokkheiti",)
+                    ("sjodnr","verdtryggt",),
+                    ("sjodnr", "yflokkheiti",),
+                    ("sjodnr", "fmeflheiti",)
                     ]
     measure_list   = [("verdkr", "verd"),   
                     ("verdkr", "verd"),
@@ -119,10 +123,13 @@ if __name__ == '__main__':
                     ("verdkr",),
                     ("verdkr", "verd"),
                     ("verdkr", ),
+                    ("verdkr", ),
                     ("verdkr", )]
+    
     keep_cols_list = [("slflokkun","mynt","gerdeink", 'eink', "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"),
                     ("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"),
                     ("slflokkun","mynt", "yflokkheiti", "uflokkheiti", "fmeflheiti", "innl_erl", "markskrad", "verdtryggt"), 
+                    (),
                     (),
                     (),
                     (),
@@ -215,7 +222,8 @@ if __name__ == '__main__':
         "1Y_verd", "1Y_verd_real",
         "3Y_verd", "3Y_verd_real",
         "5Y_verd", "5Y_verd_real",
-        "insertTime"
+        "insertTime",
+        "active"
     ]
 
     FLOAT_COLS = [
@@ -292,8 +300,6 @@ if __name__ == '__main__':
 
     # ---- usage before to_sql ----
     # end_date is your script argument (date or 'YYYY-MM-DD')
-
-
 
 
     final_df = prepare_for_upload(final_df, end_date)
