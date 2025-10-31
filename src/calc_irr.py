@@ -65,15 +65,12 @@ if __name__ == '__main__':
 
     # --- Execute procedure and fetch result ---
     with pyodbc.connect(conn_str) as conn:
-        query = f"exec am.fetch_irr_data '{y6y_ago}', '{end_date}', '{end_date}'"
+        query = f"exec am.fetch_irr_data '{y6y_ago}', '{end_date}', '{ref_date}'"
         print(query)
         df = pd.read_sql(query, conn)
 
     # df.to_pickle("irr_data.pkl")
     # print(f"{len(df):,} nr. of rows to")
-
-
-
 
     current_max_date = df["vidmdags"].max().date()
     if end_date > current_max_date:
@@ -147,8 +144,8 @@ if __name__ == '__main__':
         ("1M",  months_ago(end_date, 1), end_date),
         ("3M",  months_ago(end_date, 3), end_date),
         ("6M",  months_ago(end_date, 6), end_date),
-       # ("9M",  months_ago(end_date, 9), end_date),
-       # ("1Y",  years_ago(end_date, 1),  end_date),
+        ("9M",  months_ago(end_date, 9), end_date),
+        ("1Y",  years_ago(end_date, 1),  end_date),
        # ("3Y",  years_ago(end_date, 3),  end_date),
        # ("5Y",  years_ago(end_date, 5),  end_date),
     ]
@@ -158,7 +155,7 @@ if __name__ == '__main__':
         print(group_by)
         measures  = measure_list[i]
         keep_cols = keep_cols_list[i]
-        group_id_name = group_by[-1]  # e.g., "gerd" or "slflokkun"
+        group_id_name = "-".join(group_by) # e.g., "gerd" or "slflokkun"
 
         acc = None
         key_cols = ["group_id", *group_by, *keep_cols]  # everything identical except the IRR metrics
@@ -179,12 +176,19 @@ if __name__ == '__main__':
 
             # drop start_date for every window; keep a single end_date
             res = res.drop(columns=[c for c in ("start_date",) if c in res.columns])
+
             if acc is None:
-                # first window initializes accumulator; keep its end_date
                 acc = res.copy()
             else:
-                # subsequent windows: drop their end_date to avoid dup; UNION columns on keys
-                res = res.drop(columns=[c for c in ("end_date",) if c in res.columns])
+                # drop columns that must be unique to the first window
+                drop_cols = [c for c in ("end_date", "active") if c in res.columns]
+                res = res.drop(columns=drop_cols)
+
+                # also drop any overlapping NON-KEY columns already accumulated
+                nonkey_dups = [c for c in res.columns if c not in key_cols and c in acc.columns]
+                if nonkey_dups:
+                    res = res.drop(columns=nonkey_dups)
+
                 acc = acc.merge(res, on=key_cols, how="outer")
 
         # ensure only one end_date column and no duplicate columns overall
